@@ -4,49 +4,55 @@ require 'date'
 
 require_relative '../app/models/task'
 
-describe Task, "Check Task Table" do
-
-  before(:all) do
+describe Task, "Validate Task Methods" do
+  
+   before(:all) do
     raise RuntimeError, "be sure to run 'rake db:migrate' before running these specs" unless ActiveRecord::Base.connection.table_exists?(:tasks).should be_true
     Task.delete_all
 
-    @task = Task.new
-    @task.assign_attributes(
-      :id => 1
-      :description => "Walk My Dog",
-      :completed => false,
-      :list_id => 1
-    )
+    
+    @list = List.create(name: 'I am a list') 
+    puts @list.object_id
+   end
+  
+
+  context "The task has a list and description" do    
+    
+    it "is valid" do
+    task = Task.new(description: 'I am a task', list_id: @list.id)
+      task.should be_valid
+    end
   end
 
-    @task1 = Task.new
-    @task1.assign_attributes(
-      :id => 1
-      :description => "Walk My Dog",
-      :completed => true,
-      :list_id => 1
-    )
+  context "The task is missing a list_id" do 
+    it "should be not valid" do 
+      task = Task.new(description: 'I am a task') 
+      task.should_not be_valid
+    end
   end
 
-    @task2 = Task.new
-      @task2.assign_attributes(
-      :id => 11
-      :description => "Pick up Laundry",
-      :completed => true,
-      :list_id => 1
-    )
+  context "The task should display for uncompleted task" do
+    it "should show" do
+      task = Task.create(description: 'Walk My Dog', completed: false, list_id: @list.id) 
+      task.to_s.should == "#{task.id+1}.".ljust(3) + "[ ] Walk My Dog"
+    end
   end
 
-  it "should display for Uncompleted task" do
-    @task.to_s.should == "2. [ ] Walk My Dog"
-  end
+  context "The task should display for completed task" do
+    it "should show" do
+      task = Task.create(description: 'Make Memes of my face son', completed: true, list_id: @list.id ) 
+      task.to_s.should == "#{task.id+1}.".ljust(3) + "[X] Make Memes of my face son" 
+      end
+    end
 
-  it "should display for Completed task" do
-    @task.to_s.should == "2. [X] Walk My Dog"
-  end
-
-  it "should display for Completed 2digit task" do
-    @task.to_s.should == "12.[X] Pick up Laundry"
-  end
+  context "The task should validate an updated task" do
+    
+    it "should show" do
+      task = Task.create(description: 'Make Memes of my face son', completed: true, list_id: @list.id ) 
+      new_task = "Naw son, no more memes"
+      task.description = "Naw son, no more memes"
+      task.description.should == new_task
+      end
+    end
 
 end
